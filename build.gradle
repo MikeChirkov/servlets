@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'war'
 }
 
 group = 'ru.example'
@@ -14,6 +15,10 @@ dependencies {
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.8.9'
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    implementation 'org.springframework:spring-context:5.2.9.RELEASE'
+    // heroku app runner
+    implementation 'com.github.jsimone:webapp-runner:8.5.11.3'
 
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -22,3 +27,19 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+tasks.register('stage') {
+    dependsOn clean, war
+}
+war.mustRunAfter clean
+
+tasks.register('copyToLib', Copy) {
+    configurations.implementation.setCanBeResolved(true)
+
+    into "$buildDir/server"
+    from(configurations.implementation) {
+        include "webapp-runner*"
+    }
+}
+
+stage.dependsOn(copyToLib)
