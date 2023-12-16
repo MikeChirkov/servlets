@@ -1,9 +1,8 @@
 package ru.example.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import ru.example.controller.PostController;
 import ru.example.handler.Handler;
-import ru.example.repository.PostRepositoryInMemoryImpl;
-import ru.example.service.PostService;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,22 +11,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MainServlet extends HttpServlet {
-    private final Map<String, Map<String, Handler>> handlers = new ConcurrentHashMap<>();
+    private static final Map<String, Map<String, Handler>> handlers = new ConcurrentHashMap<>();
+    private static final String PATH_POST = "/api/posts";
+    private static final String PATH_POST_WITH_PARAM = "/api/posts/";
     private PostController controller;
 
     @Override
     public void init() {
-        final var repository = new PostRepositoryInMemoryImpl();
-        final var service = new PostService(repository);
-        controller = new PostController(service);
-        addHandler("GET", "/api/posts", ((path, req, resp) -> controller.all(resp)));
-        addHandler("GET", "/api/posts/", ((path, req, resp) -> {
-            final var id = Long.parseLong(path.substring(path.lastIndexOf("/") + 1));
+        final var context = new AnnotationConfigApplicationContext("ru.example");
+        controller = context.getBean(PostController.class);
+
+        addHandler("GET", PATH_POST, ((path, req, resp) -> controller.all(resp)));
+        addHandler("GET", PATH_POST_WITH_PARAM, ((path, req, resp) -> {
+            final var id = getLastItemInPath(path);
             controller.getById(id, resp);
         }));
-        addHandler("POST", "/api/posts", ((path, req, resp) -> controller.save(req.getReader(), resp)));
-        addHandler("DELETE", "/api/posts/", ((path, req, resp) -> {
-            final var id = Long.parseLong(path.substring(path.lastIndexOf("/") + 1));
+        addHandler("POST", PATH_POST, ((path, req, resp) -> controller.save(req.getReader(), resp)));
+        addHandler("DELETE", PATH_POST_WITH_PARAM, ((path, req, resp) -> {
+            final var id = getLastItemInPath(path);
             controller.removeById(id, resp);
         }));
     }
@@ -39,8 +40,8 @@ public class MainServlet extends HttpServlet {
             final var method = req.getMethod();
 
             Handler handler;
-            if (path.startsWith("/api/posts/") && path.matches("/api/posts/\\d+")) {
-                handler = handlers.get(method).get("/api/posts/");
+            if (path.startsWith(PATH_POST_WITH_PARAM) && path.matches(PATH_POST_WITH_PARAM + "\\d+")) {
+                handler = handlers.get(method).get(PATH_POST_WITH_PARAM);
             } else {
                 handler = handlers.get(method).get(path);
             }
@@ -56,7 +57,7 @@ public class MainServlet extends HttpServlet {
         }
     }
 
-    public void addHandler(String method, String path, Handler handler) {
+    private void addHandler(String method, String path, Handler handler) {
         Map<String, Handler> map = new ConcurrentHashMap<>();
         if (handlers.containsKey(method)) {
             map = handlers.get(method);
@@ -64,5 +65,8 @@ public class MainServlet extends HttpServlet {
         map.put(path, handler);
         handlers.put(method, map);
     }
-}
 
+    private Long getLastItemInPath(String path) {
+        return Long.parseLong(path.substring(path.lastIndexOf("/") + 1));
+    }
+}
