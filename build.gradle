@@ -15,6 +15,8 @@ dependencies {
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.8.9'
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    implementation 'org.springframework:spring-context:5.2.9.RELEASE'
     // heroku app runner
     implementation 'com.github.jsimone:webapp-runner:8.5.11.3'
 

@@ -1,5 +1,6 @@
 package ru.example.repository;
 
+import org.springframework.stereotype.Repository;
 import ru.example.model.Post;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Repository
 public class PostRepositoryInMemoryImpl implements PostRepository {
 
     private static final Map<Long, Post> storageMap = new ConcurrentHashMap<>();

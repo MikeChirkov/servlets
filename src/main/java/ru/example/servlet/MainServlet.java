@@ -1,9 +1,8 @@
 package ru.example.servlet;
 
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import ru.example.controller.PostController;
 import ru.example.handler.Handler;
-import ru.example.repository.PostRepositoryInMemoryImpl;
-import ru.example.service.PostService;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -19,9 +18,9 @@ public class MainServlet extends HttpServlet {
 
     @Override
     public void init() {
-        final var repository = new PostRepositoryInMemoryImpl();
-        final var service = new PostService(repository);
-        controller = new PostController(service);
+        final var context = new AnnotationConfigApplicationContext("ru.example");
+        controller = context.getBean(PostController.class);
+
         addHandler("GET", PATH_POST, ((path, req, resp) -> controller.all(resp)));
         addHandler("GET", PATH_POST_WITH_PARAM, ((path, req, resp) -> {
             final var id = getLastItemInPath(path);
